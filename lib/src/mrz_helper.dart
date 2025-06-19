@@ -19,14 +19,13 @@ class MRZHelper {
     // Known document type prefixes
     var supportedDocTypes = <String>[
       'A', 'C', 'P', 'V', 'I', // Common MRZ types
-      'ID', 'IR', 'RA', 'RD', 'RC', // Additional: ID cards (Romanian & others)
+      'ID','IDROU', 'IR', 'RA', 'RD', 'RC', // Additional: ID cards (Romanian & others)
     ];
 
     // Check if the first line starts with a supported type
     bool isSupportedType = supportedDocTypes.any((type) => firstLine.startsWith(type));
 
-    // Special case: some Romanian IDs start with "IDROU" or similar
-    if (isSupportedType || firstLine.startsWith('ID') || firstLine.startsWith('IDROU')) {
+    if (isSupportedType) {
       return [...ableToScanTextList];
     }
 
