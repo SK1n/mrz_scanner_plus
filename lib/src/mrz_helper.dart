@@ -5,27 +5,35 @@ import 'package:mrz_scanner_plus/src/mrz_parser/mrz_result.dart';
 class MRZHelper {
   static List<String>? getFinalListToParse(List<String> ableToScanTextList) {
     if (ableToScanTextList.length < 2) {
-      // minimum length of any MRZ format is 2 lines
       return null;
     }
+
+    // Normalize line lengths
     var lineLength = ableToScanTextList.first.length;
     for (final e in ableToScanTextList) {
-      if (e.length != lineLength) {
-        return null;
-      }
-      // to make sure that all lines are the same in length
+      if (e.length != lineLength) return null;
     }
-    var firstLineChars = ableToScanTextList.first.split('');
-    var supportedDocTypes = <String>['A', 'C', 'P', 'V', 'I'];
-    var fChar = firstLineChars[0];
-    if (supportedDocTypes.contains(fChar)) {
+
+    var firstLine = ableToScanTextList.first;
+
+    // Known document type prefixes
+    var supportedDocTypes = <String>[
+      'A', 'C', 'P', 'V', 'I', // Common MRZ types
+      'ID', 'IR', 'RA', 'RD', 'RC', // Additional: ID cards (Romanian & others)
+    ];
+
+    // Check if the first line starts with a supported type
+    bool isSupportedType = supportedDocTypes.any((type) => firstLine.startsWith(type));
+
+    // Special case: some Romanian IDs start with "IDROU" or similar
+    if (isSupportedType || firstLine.startsWith('ID')) {
       return [...ableToScanTextList];
     }
+
     return null;
   }
 
   static String testTextLine(String text) {
-    //sometimes the symbol is very same,cause cannot recognize the correct mrz code
     if (text.contains('<')) {
       text = text
           .replaceAll(' ', '')
@@ -36,9 +44,9 @@ class MRZHelper {
           .replaceAll('⟨', '<')
           .replaceAll('<*', '<<')
           .replaceAll('《', '<')
-          .replaceAll('‹', '<')
           .replaceAll('<K<', '<<<')
           .replaceAll('<k<', '<<<');
+
       final index = text.indexOf('<<<');
       if (index > 0) {
         final header = text.substring(0, index);
@@ -48,8 +56,8 @@ class MRZHelper {
 
       text = _ifNotEnough(text);
     }
+
     var list = text.split('');
-    // to check if the text belongs to any MRZ format or not
 
     if (list.length != 44 && list.length != 30 && list.length != 36) {
       return (text.contains('<') && text.replaceAll('<', '').trim().isNotEmpty) ? text : '';
@@ -58,17 +66,13 @@ class MRZHelper {
     for (var i = 0; i < list.length; i++) {
       if (RegExp(r'^[A-Za-z0-9_.]+$').hasMatch(list[i])) {
         list[i] = list[i].toUpperCase();
-        // to ensure that every letter is uppercase
-      }
-      if (double.tryParse(list[i]) == null && !RegExp(r'^[A-Za-z0-9_.]+$').hasMatch(list[i])) {
+      } else {
         list[i] = '<';
-        // sometimes < sign not recognized well
       }
     }
-    var result = list.join();
-    return result;
-  }
 
+    return list.join();
+  }
   static MRZResult? parse(String recognizedText) {
     var fullText = recognizedText.trim().replaceAll(' ', '');
     List allText = fullText.split('\n');
