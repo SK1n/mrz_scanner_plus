@@ -26,7 +26,7 @@ class MRZHelper {
     bool isSupportedType = supportedDocTypes.any((type) => firstLine.startsWith(type));
 
     // Special case: some Romanian IDs start with "IDROU" or similar
-    if (isSupportedType || firstLine.startsWith('ID')) {
+    if (isSupportedType || firstLine.startsWith('ID') || firstLine.startsWith('IDROU')) {
       return [...ableToScanTextList];
     }
 
